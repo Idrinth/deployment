@@ -29,7 +29,21 @@ if ($mac === false) {
 }
 foreach (Yaml::decodeFromFile(__DIR__ . '/../config.yml') as $allowed) {
     if ($allowed === $mac) {
-        $dispatcher = simpleDispatcher(function(RouteCollector $r) {
+        $download = function (string ...$file): string {
+            $file = __DIR__ . '/../storage/' . implode('/', $file);
+            if (!is_file($file)) {
+                header ('Content-Type: text/plain; charset=utf-8', true, 404);
+                return '404 NOT FOUND';
+            }
+            header('Content-Type: ' . getMime($file), true, 200);
+            header('Content-Disposition: attachment; filename="' . $file . '"');
+            if ($pointer = fopen($file, 'r')) {
+                fpassthru($pointer);
+                fclose($pointer);
+            }
+            return '';
+        };
+        $dispatcher = simpleDispatcher(function(RouteCollector $r) use ($download) {
             $r->addRoute('GET', '/', function () {
                 $data = '';
                 foreach (array_diff(scandir(__DIR__ . '/../storage'), ['.', '..']) as $file) {
@@ -37,34 +51,8 @@ foreach (Yaml::decodeFromFile(__DIR__ . '/../config.yml') as $allowed) {
                 }
                 return "<!DOCTYPE HTML><html><head><title>Overview</title><meta charset=\"utf-8\"/></head><body><ul>$data</ul></body>";
             });
-            $r->addRoute('GET', '/{file:[a-zA-Z0-9_-]+}', function ($file): string {
-                $file = __DIR__ . '/../storage/' . $file;
-                if (!is_file($file)) {
-                    header ('Content-Type: text/plain; charset=utf-8', true, 404);
-                    return '404 NOT FOUND';
-                }
-                header('Content-Type: '.getMime($file), true, 200);
-                header('Content-Disposition: attachment; filename="' . $file . '"');
-                if ($pointer = fopen($file, 'r')) {
-                    fpassthru($pointer);
-                    fclose($pointer);
-                }
-                return '';
-            });
-            $r->addRoute('GET', '/{file:[a-zA-Z0-9_-]+\.[a-u0-9A-Z]+}', function ($file): string {
-                $file = __DIR__ . '/../storage/' . $file;
-                if (!is_file($file)) {
-                    header ('Content-Type: text/plain; charset=utf-8', true, 404);
-                    return '404 NOT FOUND';
-                }
-                header('Content-Type: '.getMime($file), true, 200);
-                header('Content-Disposition: attachment; filename="' . $file . '"');
-                if ($pointer = fopen($file, 'r')) {
-                    fpassthru($pointer);
-                    fclose($pointer);
-                }
-                return '';
-            });
+            $r->addRoute('GET', '/{file:[a-zA-Z0-9_-/]+}', $download);
+            $r->addRoute('GET', '/{file:[a-zA-Z0-9_-/]+\.[a-u0-9A-Z]+}', $download);
         });
         $httpMethod = $_SERVER['REQUEST_METHOD'];
         $uri = $_SERVER['REQUEST_URI'];
