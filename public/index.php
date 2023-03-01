@@ -9,17 +9,6 @@ use function FastRoute\simpleDispatcher;
 
 require_once (__DIR__ . '/../vendor/autoload.php');
 
-function getRemoteMacAdress(){
-    foreach(explode("\n", `arp -n`) as $line){
-        $cols=preg_split('/\s+/', trim($line));
-        var_dump($cols,$_SERVER['REMOTE_ADDR']);
-        if ($cols[0]==$_SERVER['REMOTE_ADDR']){
-            return $cols[2];
-        }
-    }
-
-    return false;
-}
 function getMime(string $file): string
 {
     $out = Detector::detectByContent($file);        
@@ -30,7 +19,8 @@ function getMime(string $file): string
     return $out->getMimeType();
 }
 
-$mac = getRemoteMacAdress();
+$headers = apache_request_headers();
+$mac = $headers['X-MAC-ADRESS'] ?? false;
 
 if ($mac === false) {
     header ('Content-Type: text/plain; charset=utf-8', true, 403);
