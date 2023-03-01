@@ -3,11 +3,14 @@
 use BrandEmbassy\FileTypeDetector\Detector;
 use BrandEmbassy\FileTypeDetector\FileInfo;
 use De\Idrinth\Yaml\Yaml;
+use Dotenv\Dotenv;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
 
 require_once (__DIR__ . '/../vendor/autoload.php');
+
+Dotenv::createImmutable(dirname(__DIR__))->load();
 
 function getMime(string $file): string
 {
@@ -20,15 +23,22 @@ function getMime(string $file): string
 }
 
 $headers = apache_request_headers();
-$mac = $headers['X-MAC-ADRESS'] ?? false;
+$id = $headers[$_ENV['HEADER_KEY_NAME']] ?? false;
 
-if ($mac === false) {
+if ($id === false) {
     header ('Content-Type: text/plain; charset=utf-8', true, 403);
     echo '403 FORBIDDEN';
     exit;
 }
+if (isset($_ENV['SECRET_VALUE']) && $_ENV['SECRET_VALUE']) {
+    if (!isset($headers[$_ENV['HEADER_SECRET_KEY']]) || $headers[$_ENV['HEADER_SECRET_KEY']] !== $_ENV['SECRET_VALUE']) {
+        header ('Content-Type: text/plain; charset=utf-8', true, 403);
+        echo '403 FORBIDDEN';
+        exit;
+    }
+}
 foreach (Yaml::decodeFromFile(__DIR__ . '/../config.yml') as $allowed) {
-    if ($allowed === $mac) {
+    if ($allowed === $id) {
         $download = function (string $file): string {
             $file = __DIR__ . '/../storage/' . preg_replace(['/\/{2,}/', '/\.{2,}/'], ['/', '.'], $file);
             if (!is_file($file)) {
