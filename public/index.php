@@ -12,7 +12,7 @@ require_once (__DIR__ . '/../vendor/autoload.php');
 function getRemoteMacAdress(){
     foreach(explode("\n", `arp -n`) as $line){
         $cols=preg_split('/\s+/', trim($line));
-
+        var_dump($cols,$_SERVER['REMOTE_ADDR']);
         if ($cols[0]==$_SERVER['REMOTE_ADDR']){
             return $cols[2];
         }
@@ -39,7 +39,6 @@ if ($mac === false) {
 }
 foreach (Yaml::decodeFromFile(__DIR__ . '/../config.yml') as $allowed) {
     if ($allowed === $mac) {
-        
         $dispatcher = simpleDispatcher(function(RouteCollector $r) {
             $r->addRoute('GET', '/', function () {
                 $data = '';
