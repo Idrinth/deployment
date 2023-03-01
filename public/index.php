@@ -29,8 +29,8 @@ if ($mac === false) {
 }
 foreach (Yaml::decodeFromFile(__DIR__ . '/../config.yml') as $allowed) {
     if ($allowed === $mac) {
-        $download = function (string ...$file): string {
-            $file = __DIR__ . '/../storage/' . implode('/', $file);
+        $download = function (string $file): string {
+            $file = __DIR__ . '/../storage/' . preg_replace(['/\/{2,}/', '/\.{2,}/'], ['/', '.'], $file);
             if (!is_file($file)) {
                 header ('Content-Type: text/plain; charset=utf-8', true, 404);
                 return '404 NOT FOUND';
@@ -47,8 +47,9 @@ foreach (Yaml::decodeFromFile(__DIR__ . '/../config.yml') as $allowed) {
             $r->addRoute('GET', '/', function () {
                 $data = '';
                 foreach (array_diff(scandir(__DIR__ . '/../storage'), ['.', '..']) as $file) {
-                    if (filesize(__DIR__ . '/../storage/' . $file) > 0) {
-                        $data .= "<li><a href=\"/$file\">$file</a></li>";
+                    $size = filesize(__DIR__ . '/../storage/' . $file);
+                    if ($size > 0) {
+                        $data .= "<li><a href=\"/$file\">$file ($size bytes)</a></li>";
                     }
                 }
                 return "<!DOCTYPE HTML><html><head><title>Overview</title><meta charset=\"utf-8\"/></head><body><ul>$data</ul></body>";
