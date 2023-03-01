@@ -1,0 +1,16 @@
+{
+    "name": "idrinth/deployment",
+    "description": "A small script to only allow access to resources to specific mac adresses.",
+    "authors": [
+        {
+            "name": "Björn Büttner",
+            "homepage": "https://github.com/idrinth"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "idrinth/yaml-facade": "^1.2.0",
+        "brandembassy/file-type-detector": "^2.1.0",
+        "nikic/fast-route": "^1.3.0"
+    }
+}
