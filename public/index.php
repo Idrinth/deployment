@@ -47,7 +47,9 @@ foreach (Yaml::decodeFromFile(__DIR__ . '/../config.yml') as $allowed) {
             $r->addRoute('GET', '/', function () {
                 $data = '';
                 foreach (array_diff(scandir(__DIR__ . '/../storage'), ['.', '..']) as $file) {
-                    $data .= "<li><a href=\"/$file\">$file</a></li>";
+                    if (filesize(__DIR__ . '/../storage/' . $file) > 0) {
+                        $data .= "<li><a href=\"/$file\">$file</a></li>";
+                    }
                 }
                 return "<!DOCTYPE HTML><html><head><title>Overview</title><meta charset=\"utf-8\"/></head><body><ul>$data</ul></body>";
             });
